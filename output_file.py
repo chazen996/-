@@ -1,6 +1,7 @@
 import generate_file,read_write
 import os,time
 import threading
+from collections import deque
 
 pointer_list = [] # 保存各sub_file文件的读写指针列表
 final_result = [] # 保存最终排好序的10000000条记录的数组（实际长度到不了10000000，由另一个线程中定时写入硬盘）
@@ -27,11 +28,9 @@ def output_final_list(size):
             records = read_write.split_records(records)
             records_list.append(records)
     empty = False
-    start = time.time()
     while True:
         if len(records_list)==0:
             done = True
-            print('耗时:%f' % (time.time()-start))
             break
 
         min_record = [generate_file.RECORDS_NUMBER + 520,-1] # min_record[0] 记录当前最小key，min_record[1]记录对的records_list索引
@@ -55,12 +54,13 @@ def output_final_list(size):
                 
             empty = False
         else:
-            record = records_list[min_record[1]].pop(0) # 否则将最小的记录插入到final_result数组当中
+            record = records_list[min_record[1]].popleft() # 否则将最小的记录插入到final_result数组当中
             lock.acquire()
             try:
                 final_result.append(record)
             finally:
                 lock.release()
+            # final_result.append(record)
 
 def output_final_file():
     global final_result,done,lock
@@ -87,8 +87,10 @@ if __name__ == '__main__':
     path = os.path.join(os.path.abspath('.'),generate_file.FILE_PATH)
     is_exist = False if ((os.path.exists(path) and os.path.isfile(path)) or (not os.path.exists(path))) else True
     assert  is_exist,"the target directory isn't exist."
+    print('缓冲区大小: %d byte' % generate_file.BLOCK_SIZE)
+    start = time.time()
     t = threading.Thread(target=output_final_file)
-    # t.start()
+    t.start()
     try:
         file_list = os.listdir(path)
         for sub_file in file_list:
@@ -96,9 +98,31 @@ if __name__ == '__main__':
             pointer_list.append(f)
         # 一次只读1个BLOCK大小的记录（多出部分舍弃不读）
         size = generate_file.BLOCK_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
-        print('缓冲区大小: %d byte' % generate_file.BLOCK_SIZE)
+        
         output_final_list(size)
         close_pointers()
     finally:
         close_pointers()
-    # t.join()
+    t.join()
+    end = time.time()
+    print('共耗时:%fs' % (end - start))
+
+    print('缓冲区大小: 1 MB')
+    start = time.time()
+    t = threading.Thread(target=output_final_file)
+    t.start()
+    try:
+        file_list = os.listdir(path)
+        for sub_file in file_list:
+            f = open(os.path.join(os.path.abspath(generate_file.FILE_PATH),sub_file),'rb')
+            pointer_list.append(f)
+        # 一次只读1MB记录（多出部分舍弃不读）
+        size = generate_file.CYLINDER_BASED_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
+        
+        output_final_list(size)
+        close_pointers()
+    finally:
+        close_pointers()
+    t.join()
+    end = time.time()
+    print('共耗时:%fs' % (end - start))

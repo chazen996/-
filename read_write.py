@@ -1,6 +1,7 @@
 #!usr/bin/env python3
 # -*- coding:utf-8 -*-
 
+from collections import deque
 import os,generate_file
 import time
 
@@ -12,6 +13,8 @@ def merge_sort(lists):
     left = merge_sort(lists[:middle])
     right = merge_sort(lists[middle:])
     return merge(left,right)
+
+    # return sorted(lists)
 
 def merge(list_a,list_b):
     result = []
@@ -32,7 +35,7 @@ def merge(list_a,list_b):
 def split_records(memory): 
     '''将内存中的数据拆分成tuple数组'''
     memory = memory.split('\n')
-    records = []
+    records = deque()
     for item in memory:
         if len(item) != 0: # 因为分隔符为\n，拆分后的最后一条记录可能为空
             item = item.split()
@@ -63,7 +66,8 @@ if __name__ == '__main__':
         while True:
             memory = f.read(generate_file.MEMORY_SIZE).decode('utf-8')
             if memory != '' and memory != '\n':
-                records = merge_sort(split_records(memory))
+                # records = merge_sort(split_records(memory))
+                records = sorted(split_records(memory))
                 records = ["%s %s\n" % (x[0],x[1]) for x in records] # 将tuple数组转换为字符串数组
                 file_name = os.path.join(os.path.abspath(generate_file.FILE_PATH),'sub_file_' + str(count) + '.dat')
 

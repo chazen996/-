@@ -56,16 +56,17 @@ def output_final_list(size):
             empty = False
         else:
             record = records_list[min_record[1]].pop(0) # 否则将最小的记录插入到final_result数组当中
-            lock.acquire()
-            try:
-                final_result.append(record)
-            finally:
-                lock.release()
+            final_result.append(record)
+            # lock.acquire()
+            # try:
+            #     final_result.append(record)
+            # finally:
+            #     lock.release()
 
 def output_final_file():
     global final_result,done,lock
     count = 0
-    with open('final.dat','wb') as f:
+    with open('final2.dat','wb') as f:
         while True:
             if done and len(final_result)==0:
                 break
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     is_exist = False if ((os.path.exists(path) and os.path.isfile(path)) or (not os.path.exists(path))) else True
     assert  is_exist,"the target directory isn't exist."
 
-    t = threading.Thread(target=output_final_file)
+    # t = threading.Thread(target=output_final_file)
     # t.start()
     try:
         file_list = os.listdir(path)
@@ -96,7 +97,8 @@ if __name__ == '__main__':
             f = open(os.path.join(os.path.abspath(generate_file.FILE_PATH),sub_file),'rb')
             pointer_list.append(f)
         # 一次读取1MB
-        size = generate_file.CYLINDER_BASED_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
+        # size = generate_file.CYLINDER_BASED_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
+        size = generate_file.CYLINDER_BASED_SIZE
         print('缓冲区大小: 1MB')
         output_final_list(size)
         close_pointers()
