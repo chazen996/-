@@ -2,35 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from collections import deque
-import os,generate_file
-import time
-
-def merge_sort(lists): 
-    '''归并排序'''
-    if len(lists)==1:
-        return lists
-    middle = len(lists)//2
-    left = merge_sort(lists[:middle])
-    right = merge_sort(lists[middle:])
-    return merge(left,right)
-
-    # return sorted(lists)
-
-def merge(list_a,list_b):
-    result = []
-    i = j = 0
-    while i<len(list_a) and j<len(list_b):
-        if list_a[i][0] <= list_b[j][0]: # 结合实际问题进行比较，这里的每个元素都是tuple所以拿出key值进行比较
-            result.append(list_a[i])
-            i += 1
-        else:
-            result.append(list_b[j])
-            j += 1
-    if i >= len(list_a):
-        result.extend(list_b[j:]) # 注意extend剩余部分而非最初完整数组
-    else:
-        result.extend(list_a[i:])
-    return result
+import os,generate_file,time
 
 def split_records(memory): 
     '''将内存中的数据拆分成tuple数组'''
@@ -64,10 +36,9 @@ if __name__ == '__main__':
     with open('file.dat','rb') as f:
         count = 1
         while True:
-            memory = f.read(generate_file.MEMORY_SIZE).decode('utf-8')
+            memory = f.read(generate_file.MEMORY_SIZE).decode('utf-8') # 一次读取50MB到内存中
             if memory != '' and memory != '\n':
-                # records = merge_sort(split_records(memory))
-                records = sorted(split_records(memory))
+                records = sorted(split_records(memory)) # 使用工具类进行快速排序
                 records = ["%s %s\n" % (x[0],x[1]) for x in records] # 将tuple数组转换为字符串数组
                 file_name = os.path.join(os.path.abspath(generate_file.FILE_PATH),'sub_file_' + str(count) + '.dat')
 

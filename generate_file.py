@@ -1,8 +1,7 @@
 #!usr/bin/env python3
 # -*- coding:utf-8 -*-
 
-import random
-import time
+import random,time
 
 RECORDS_NUMBER = 10000000 # 记录数
 RECORD_BYTES_LENGTH = 100 # 每条记录100字节
@@ -10,7 +9,7 @@ NUMBER_COUNT = 500000 # 生成1G随机文件时，攒够500000条数据再往硬
 BLOCK_SIZE = 4096 # 一个BLOCK为4096byte
 CYLINDER_BASED_SIZE = 1024*1024 # 缓冲区大小为1MB
 MEMORY_SIZE = 50*1024*1024 # 内存大小为50MB
-FILE_PATH = 'sub_file' # 分成的若干个子文件路径（./sub_file）
+FILE_PATH = 'sub_file' # 分成的若干个子文件路径(./sub_file)
 # 用于生成垃圾填充数据的字典表
 DICTIONARY = 'tT4xOCTUQqkeq7yJVaqjmhragBPAoE4ESeTNXK1BPG0zwpSCbj7ejLmMJPdnnL1YicM2j28mM9iFCUqeaSgWlAqDLLf5Yzy1HUjx'
 

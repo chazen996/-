@@ -63,6 +63,7 @@ def output_final_list(size):
             # final_result.append(record)
 
 def output_final_file():
+    '''利用多线程将final_result数组中的元素输出到final.dat文件中'''
     global final_result,done,lock
     count = 0
     with open('final.dat','wb') as f:
@@ -73,56 +74,44 @@ def output_final_file():
                 lock.acquire()
                 try:
                     records = ["%s %s\n" % (x[0],x[1]) for x in final_result] # 将tuple数组转换为字符串数组
-                    f.write(''.join(records).encode('utf-8'))
-                    count += len(final_result)
-                    
                     final_result = []
                 finally:
                     lock.release()
-            time.sleep(10)
+                f.write(''.join(records).encode('utf-8'))
+                count += len(records)
+            time.sleep(2)
     done = False
     print('共写入 %d 条数据' % count)
+
+def run(str,size):
+    '''将优化前优化后相同部分代码抽离，减少代码冗余'''
+    print(str) # 打印输出消息
+    start = time.time()
+    t = threading.Thread(target=output_final_file) # 使用多线程输出文件
+    t.start()
+    try:
+        file_list = os.listdir(path)
+        for sub_file in file_list:
+            f = open(os.path.join(os.path.abspath(generate_file.FILE_PATH),sub_file),'rb')
+            pointer_list.append(f)        
+        output_final_list(size)
+        close_pointers()
+    finally:
+        close_pointers()
+    t.join()
+    end = time.time()
+    print('共耗时:%fs\n' % (end - start))
 
 if __name__ == '__main__':
     path = os.path.join(os.path.abspath('.'),generate_file.FILE_PATH)
     is_exist = False if ((os.path.exists(path) and os.path.isfile(path)) or (not os.path.exists(path))) else True
     assert  is_exist,"the target directory isn't exist."
-    print('缓冲区大小: %d byte' % generate_file.BLOCK_SIZE)
-    start = time.time()
-    t = threading.Thread(target=output_final_file)
-    t.start()
-    try:
-        file_list = os.listdir(path)
-        for sub_file in file_list:
-            f = open(os.path.join(os.path.abspath(generate_file.FILE_PATH),sub_file),'rb')
-            pointer_list.append(f)
-        # 一次只读1个BLOCK大小的记录（多出部分舍弃不读）
-        size = generate_file.BLOCK_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
-        
-        output_final_list(size)
-        close_pointers()
-    finally:
-        close_pointers()
-    t.join()
-    end = time.time()
-    print('共耗时:%fs' % (end - start))
+    str = '缓冲区大小: %d byte' % generate_file.BLOCK_SIZE
+    # 一次读取1个BLOCK大小的记录（多出部分舍弃不读）
+    size = generate_file.BLOCK_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
+    run(str,size)
 
-    print('缓冲区大小: 1 MB')
-    start = time.time()
-    t = threading.Thread(target=output_final_file)
-    t.start()
-    try:
-        file_list = os.listdir(path)
-        for sub_file in file_list:
-            f = open(os.path.join(os.path.abspath(generate_file.FILE_PATH),sub_file),'rb')
-            pointer_list.append(f)
-        # 一次只读1MB记录（多出部分舍弃不读）
-        size = generate_file.CYLINDER_BASED_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
-        
-        output_final_list(size)
-        close_pointers()
-    finally:
-        close_pointers()
-    t.join()
-    end = time.time()
-    print('共耗时:%fs' % (end - start))
+    str = '缓冲区大小: 1 MB'
+    # 一次只读1MB大小的记录（多出部分舍弃不读）
+    size = generate_file.CYLINDER_BASED_SIZE//generate_file.RECORD_BYTES_LENGTH*generate_file.RECORD_BYTES_LENGTH
+    run(str,size)
